@@ -8,6 +8,8 @@ r = {
 }
 function onCreate()
 	runTimer('foxyMove', pl(5.01), 0);
+	
+	setVar('foxPhase', r.progress);
 end
 
 local dumTime = 0;
@@ -52,7 +54,10 @@ local timers = {
 	['foxyMove'] = function()
 		if r.progress < 3 and r.disTime <= 0 and getRandomInt(1, 20) <= r.ai then
 			r.progress = r.progress + 1;
-			--foxyKnock();
+			setVar('foxPhase', r.progress);
+			
+			debugPrint('moved a phase!');
+			setCamRobot(3, 4, 'FOXY' .. r.progress);
 		end
 	end
 }

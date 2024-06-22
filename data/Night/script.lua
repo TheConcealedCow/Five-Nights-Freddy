@@ -406,6 +406,13 @@ function makePanel()
 		setCam(c, 'panelOvCam');
 		addLuaSprite(c);
 	end
+	
+	makeAnimatedLuaSprite('cam2AFox', panel .. 'cams/cams/cam2AFoxy');
+	addAnimationByPrefix('cam2AFox', 'cam', 'Foxy', 39, false);
+	playAnim('cam2AFox', 'cam', true);
+	setCam('cam2AFox', 'cameraCam');
+	addLuaSprite('cam2AFox');
+	setAlpha('cam2AFox', 0.00001);
 end
 
 function makeHUD()
@@ -608,6 +615,10 @@ local leaveCam = {
 	[3] = function()
 		setSoundVolume('cam3Sfx', 0.05);
 	end,
+	[4] = function()
+		setVis('cam2AFox', false);
+		setAlpha('cam2AFox', 0);
+	end,
 	[10] = function()
 		setAlpha('noVideo', 0);
 		setSoundVolume('fredKitchen', 0.05);
@@ -624,11 +635,10 @@ function camsClick()
 				playAnim(i .. 'Marker', 'glow', true);
 				
 				if leaveCam[curCam] then leaveCam[curCam](); end
-				
 				curCam = i;
-				
-				onNewCam();
 			end
+			
+			onNewCam();
 			cameraBlip();
 		end
 	end
@@ -637,6 +647,20 @@ end
 local onCamFunc = {
 	[3] = function()
 		setSoundVolume('cam3Sfx', 0.15);
+	end,
+	[4] = function()
+		setVis('cam2AFox', true);
+		
+		local ph = getVar('foxPhase');
+		if ph == 3 then
+			setVar('foxPhase', 4);
+			setAlpha('cam2AFox', 1);
+			playAnim('cam2AFox', 'cam', true);
+			
+			doSound('run', 1, 'foxRun');
+		elseif ph > 3 then
+			setAlpha('cam2AFox', 1);
+		end
 	end,
 	[6] = function()
 		runHaxeFunction('camUpdatePos', {640});
@@ -1110,7 +1134,10 @@ local timers = {
 		setAlpha('panelOvCam', 0);
 		setAlpha('noVideo', 0);
 		
-		if not itsMe then setAlpha('halluCam', 0); end
+		setVis('cam2AFox', false);
+		setAlpha('cam2AFox', 0);
+		
+		setAlpha('halluCam', 0);
 		
 		for i = 1, 11 do
 			local t = i .. 'Cam';
