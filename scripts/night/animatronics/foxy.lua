@@ -52,7 +52,7 @@ local timers = {
 	['foxyMove'] = function()
 		if r.progress < 3 and r.disTime <= 0 and getRandomInt(1, 20) <= r.ai then
 			r.progress = r.progress + 1;
-			foxyKnock();
+			--foxyKnock();
 		end
 	end
 }
