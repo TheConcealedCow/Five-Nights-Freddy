@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Created with Free texture packer v0.6.7 http://free-tex-packer.com
+-->
+<TextureAtlas imagePath="useBar.png" width="126" height="93">
+  <SubTexture name="Use0001" x="1" y="1"  width="19" height="29" frameX="-0" frameY="-0" frameWidth="103" frameHeight="32"/>
+  <SubTexture name="Use0002" x="22" y="1"  width="40" height="29" frameX="-0" frameY="-0" frameWidth="103" frameHeight="32"/>
+  <SubTexture name="Use0003" x="64" y="1"  width="61" height="29" frameX="-0" frameY="-0" frameWidth="103" frameHeight="32"/>
+  <SubTexture name="Use0004" x="1" y="32"  width="82" height="29" frameX="-0" frameY="-0" frameWidth="103" frameHeight="32"/>
+  <SubTexture name="Use0005" x="1" y="63"  width="103" height="29" frameX="-0" frameY="-0" frameWidth="103" frameHeight="32"/>
+</TextureAtlas>

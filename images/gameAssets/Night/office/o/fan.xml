@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Created with Free texture packer v0.6.7 http://free-tex-packer.com
+-->
+<TextureAtlas imagePath="fan.png" width="418" height="198">
+  <SubTexture name="Fan0001" x="1" y="1"  width="138" height="196" frameX="-0" frameY="-0" frameWidth="138" frameHeight="196"/>
+  <SubTexture name="Fan0002" x="141" y="1"  width="137" height="196" frameX="-0" frameY="-0" frameWidth="138" frameHeight="196"/>
+  <SubTexture name="Fan0003" x="280" y="1"  width="137" height="196" frameX="-0" frameY="-0" frameWidth="138" frameHeight="196"/>
+</TextureAtlas>

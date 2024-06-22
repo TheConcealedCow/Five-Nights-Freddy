@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Created with Free texture packer v0.6.7 http://free-tex-packer.com
+-->
+<TextureAtlas imagePath="itsMe.png" width="2576" height="834">
+  <SubTexture name="Scare0002" x="1" y="1"  width="645" height="110" frameX="-434" frameY="-384" frameWidth="1280" frameHeight="720"/>
+  <SubTexture name="Scare0004" x="648" y="1"  width="645" height="110" frameX="-177" frameY="-138" frameWidth="1280" frameHeight="720"/>
+  <SubTexture name="Scare0001" x="1295" y="1"  width="1280" height="720" frameX="-0" frameY="-0" frameWidth="1280" frameHeight="720"/>
+  <SubTexture name="Scare0003" x="1" y="113"  width="1280" height="720" frameX="-0" frameY="-0" frameWidth="1280" frameHeight="720"/>
+</TextureAtlas>

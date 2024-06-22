@@ -1,0 +1,8 @@
+{
+	"name": "Game",
+	"description": "Game description here",
+	"restart": false,
+	"runsGlobally": false,
+	"color": [255, 255, 255],
+	"discordRPC": null
+}

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Created with Free texture packer v0.6.7 http://free-tex-packer.com
+-->
+<TextureAtlas imagePath="cam2AFoxy.png" width="6408" height="5776">
+  <SubTexture name="Foxy0001" x="1" y="1"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0004" x="1603" y="1"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0005" x="3205" y="1"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0006" x="4807" y="1"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0007" x="1" y="723"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0008" x="1603" y="723"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0009" x="3205" y="723"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0010" x="4807" y="723"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0011" x="1" y="1445"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0012" x="1603" y="1445"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0013" x="3205" y="1445"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0014" x="4807" y="1445"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0015" x="1" y="2167"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0016" x="1603" y="2167"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0017" x="3205" y="2167"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0018" x="4807" y="2167"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0019" x="1" y="2889"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0020" x="1603" y="2889"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0021" x="3205" y="2889"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0022" x="4807" y="2889"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0023" x="1" y="3611"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0024" x="1603" y="3611"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0025" x="3205" y="3611"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0026" x="4807" y="3611"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0027" x="1" y="4333"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0028" x="1603" y="4333"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0029" x="3205" y="4333"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0030" x="4807" y="4333"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0031" x="1" y="5055"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0032" x="1603" y="5055"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0033" x="3205" y="5055"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0002" x="1" y="1"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+  <SubTexture name="Foxy0003" x="1" y="1"  width="1600" height="720" frameX="-0" frameY="-0" frameWidth="1600" frameHeight="720"/>
+</TextureAtlas>

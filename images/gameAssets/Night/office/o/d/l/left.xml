@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Created with Free texture packer v0.6.7 http://free-tex-packer.com
+-->
+<TextureAtlas imagePath="leftPanel.png" width="244" height="176">
+  <SubTexture name="LOFF" x="1" y="1"  width="59" height="174" frameX="-14" frameY="-41" frameWidth="92" frameHeight="247"/>
+  <SubTexture name="LBOTH" x="62" y="1"  width="59" height="174" frameX="-14" frameY="-41" frameWidth="92" frameHeight="247"/>
+  <SubTexture name="LDOOR" x="123" y="1"  width="59" height="174" frameX="-14" frameY="-41" frameWidth="92" frameHeight="247"/>
+  <SubTexture name="LLIGHT" x="184" y="1"  width="59" height="174" frameX="-14" frameY="-41" frameWidth="92" frameHeight="247"/>
+</TextureAtlas>
