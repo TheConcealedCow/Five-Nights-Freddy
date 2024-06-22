@@ -4,6 +4,9 @@ r = {
 	disTime = 0,
 	progress = 0,
 	
+	foxWaitRun = 0,
+	foxWaitAtt = 0,
+	
 	knocks = 0,
 }
 function onCreate()
@@ -38,6 +41,45 @@ function onUpdatePost(e)
 				doSound('pirateSong', (looking and 0.15 or 0.05), 'cam3Sfx');
 			end
 		end
+	elseif r.progress == 3 then
+		r.foxWaitRun = r.foxWaitRun + ti;
+		if r.foxWaitRun > 1500 then
+			r.foxWaitRun = 0;
+			r.progress = 5;
+			setVar('foxPhase', 5);
+			
+			foxTryAttack();
+		end
+	elseif r.progress == 5 then foxTryAttack(); end
+	
+	if getVar('foxPhase') == 4 then
+		r.foxWaitAtt = r.foxWaitAtt + ti;
+		if r.foxWaitAtt > 100 then
+			r.foxWaitAtt = 0;
+			r.progress = 5;
+			setVar('foxPhase', 5);
+			
+			foxTryAttack();
+		end
+	end
+end
+
+function foxTryAttack()
+	local doorPhase = getMainVar('leftDoor').phase;
+	
+	if getMainVar('viewingCams') then -- todo: make this close  the cams and turn off your lights
+		
+	end
+	
+	if doorPhase == 0 then
+		r.progress = 6;
+		
+		debugPrint('boo');
+	elseif doorPhase == 2 then
+		r.progress = Random(2);
+		setCamRobot(3, 4, (r.progress == 0 and '' or 'FOXY' .. r.progress));
+		
+		foxyKnock();
 	end
 end
 
@@ -54,6 +96,7 @@ local timers = {
 	['foxyMove'] = function()
 		if r.progress < 3 and r.disTime <= 0 and getRandomInt(1, 20) <= r.ai then
 			r.progress = r.progress + 1;
+			r.foxWaitRun = 0;
 			setVar('foxPhase', r.progress);
 			
 			debugPrint('moved a phase!');
