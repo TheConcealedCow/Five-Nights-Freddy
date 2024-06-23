@@ -21,6 +21,14 @@ local randForPic = 0;
 
 local itsMe = false;
 robotGlitch = false;
+
+--[[
+	TODO: 
+	 - when leaving the stage check if bonnie and chica have left as well
+	 - make the jumpscare actually work!!!
+	 - make the suffix cam check properly account for freddy n friends!!
+	       - suffix stripping
+]]
 function create()
 	luaDebugMode = true; -- "songVariations": ["fucked"],
 	
@@ -165,8 +173,8 @@ function create()
 	cacheSounds();
 	
 	addLuaScript('scripts/night/animatronics/freddy');
-	addLuaScript('scripts/night/animatronics/bonnie');
 	addLuaScript('scripts/night/animatronics/chica');
+	addLuaScript('scripts/night/animatronics/bonnie');
 	addLuaScript('scripts/night/animatronics/foxy');
 	
 	randForPic = getRandomInt(1, 100);

@@ -1,9 +1,3 @@
---[[
-	TODO: 
-	 - when leaving the stage check if bonnie and chica have left as well
-	 - make the jumpscare actually work!!!
-	 - make the suffix cam check properly account for freddy n friends!!
-]]
 r = {
 	ai = 0,
 	cam = 1,

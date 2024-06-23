@@ -1,5 +1,5 @@
 r = {
-	ai = 20,
+	ai = 0,
 	refCam = 0,
 	disTime = 0,
 	progress = 0,
@@ -74,9 +74,13 @@ function foxTryAttack()
 	lightOff();
 	
 	if doorPhase == 0 then
-		r.progress = 6;
+		if not getVar('jumpscared') then
+			r.progress = 6;
+			
+			setVar('jumpscared', true);
 		
-		debugPrint('boo');
+			debugPrint('boo');
+		end
 	elseif doorPhase == 2 then
 		r.progress = Random(2);
 		setCamRobot(3, 4, (r.progress == 0 and '' or 'FOXY' .. r.progress));
