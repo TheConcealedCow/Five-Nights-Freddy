@@ -67,9 +67,11 @@ end
 function foxTryAttack()
 	local doorPhase = getMainVar('leftDoor').phase;
 	
-	if getMainVar('viewingCams') then -- todo: make this close  the cams and turn off your lights
-		
+	if getMainVar('viewingCams') then
+		triggerPanel();
 	end
+	
+	lightOff();
 	
 	if doorPhase == 0 then
 		r.progress = 6;

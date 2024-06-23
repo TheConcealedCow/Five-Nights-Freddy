@@ -123,6 +123,14 @@ function create()
 			parentLua.call('varSetMain', [v, f]);
 		});		
 		
+		createGlobalCallback('triggerPanel', function() {
+			parentLua.call('trigPanel', []);
+		});
+		
+		createGlobalCallback('lightOff', function() {
+			parentLua.call('disableLight', []);
+		});
+		
 		function updateScroll(x) {
 			var realX = (x - 640);
 			
@@ -241,7 +249,7 @@ function makeOffice()
 end
 
 local clickCool = 0;
-local lightOn = false;
+lightOn = false;
 local lastLightOn = '';
 function makeDoors()
 	for _, d in pairs({'left', 'right'}) do
@@ -710,12 +718,16 @@ function checkPanel()
 			setAlpha('panelFlick', 1);
 			
 			if mouseOverlaps('panelUp') then
-				hoverPanel = true;
-				setAlpha('panelFlick', 0);
-				onPanelFunc();
+				trigPanel();
 			end
 		end
 	end
+end
+
+function trigPanel()
+	hoverPanel = true;
+	setAlpha('panelFlick', 0);
+	onPanelFunc();
 end
 
 local panelTrig = false;
