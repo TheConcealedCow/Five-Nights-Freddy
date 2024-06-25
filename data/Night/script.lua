@@ -26,12 +26,12 @@ robotGlitch = false;
 
 --[[
 	TODO: 
-	 - when leaving the stage for freddy check if bonnie and chica have left as well
-	 - make the jumpscare actually work!!!
-	 - make the suffix cam check properly account for freddy n friends!!
-	       - suffix stripping
-		   
 	 - when viewing an animatronic when they move, make ur camera stuck!!
+	 - make the jumpscare actually work!!!
+	 - 6 am stuff
+	 - powerout stuff
+	 
+	 - when chica is in the kitchen make it play the sounds of her fuckin around
 ]]
 function create()
 	luaDebugMode = true; -- "songVariations": ["fucked"],
