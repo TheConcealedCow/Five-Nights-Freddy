@@ -24,10 +24,12 @@ robotGlitch = false;
 
 --[[
 	TODO: 
-	 - when leaving the stage check if bonnie and chica have left as well
+	 - when leaving the stage for freddy check if bonnie and chica have left as well
 	 - make the jumpscare actually work!!!
 	 - make the suffix cam check properly account for freddy n friends!!
 	       - suffix stripping
+		   
+	 - when viewing an animatronic when they move, make ur camera stuck!!
 ]]
 function create()
 	luaDebugMode = true; -- "songVariations": ["fucked"],
@@ -119,24 +121,20 @@ function create()
 			parentLua.call('setRobotRoom', [c, i, r]);
 		});
 		
-		createGlobalCallback('removePower', function(p) {
-			parentLua.call('takePower', [p]);
-		});
-		
 		createGlobalCallback('getMainVar', function(v) {
 			return parentLua.call('varMain', [v]);
 		});
 		
 		createGlobalCallback('setMainVar', function(v, f) {
 			parentLua.call('varSetMain', [v, f]);
-		});		
-		
-		createGlobalCallback('triggerPanel', function() {
-			parentLua.call('trigPanel', []);
+		});
+
+		createGlobalCallback('runMainFunc', function(v, ?n) {
+			return parentLua.call('mainFunc', [v, n]);
 		});
 		
-		createGlobalCallback('lightOff', function() {
-			parentLua.call('disableLight', []);
+		createGlobalCallback('doorProp', function(d, p, v) {
+			parentLua.call('propDoor', [d, p, v]);
 		});
 		
 		function updateScroll(x) {
@@ -218,7 +216,7 @@ function makeOffice()
 	
 	makeAnimatedLuaSprite('rightOfficeLight', office .. 'l/right');
 	addAnimationByPrefix('rightOfficeLight', 'r', 'RightLight', 1);
-	addAnimationByPrefix('rightOfficeLight', 'lCHICA', 'RightChica', 1);
+	addAnimationByPrefix('rightOfficeLight', 'rCHICA', 'RightChica', 1);
 	playAnim('rightOfficeLight', 'r', true);
 	setCam('rightOfficeLight');
 	addLuaSprite('rightOfficeLight');
@@ -347,11 +345,6 @@ function makePanel()
 	setAlpha('panel', 0.00001);
 	
 	
-	makeLuaSprite('blipLayer');
-	setCam('blipLayer', 'panelOvCam');
-	addLuaSprite('blipLayer');
-	setAlpha('blipLayer', 0);
-	
 	staticBase = Random(3);
 	makeAnimatedLuaSprite('staticCam', panel .. 'hud/static');
 	addAnimationByPrefix('staticCam', 'static', 'Satic', 60);
@@ -389,6 +382,11 @@ function makePanel()
 	playAnim('map', 'map', true);
 	setCam('map', 'panelOvCam');
 	addLuaSprite('map');
+	
+	makeLuaSprite('blipLayer');
+	setCam('blipLayer', 'panelOvCam');
+	addLuaSprite('blipLayer');
+	setAlpha('blipLayer', 0);
 	
 	
 	for i = 1, 11 do
@@ -543,7 +541,7 @@ function tickUpdate()
 	flickerCam = (getRandomInt(1, 10) <= 3);
 	if curCam == 4 and viewingCams then updateACam(); end
 	
-	setVis('halluCam', (Random(10) == 1));
+	if itsMe then setVis('halluCam', (Random(10) == 1)); end
 	
 	updateStaticAlpha();
 end
@@ -852,14 +850,13 @@ function doorFunc(d)
 	if clickCool > 0 then return; end
 	
 	if door.stuck then
-		
+		doSound('error', 1, 'doorSound');
 	elseif door.midPhase then return; else
+		clickCool = 10;
 		door.clicked = not door.clicked;
 		updateADoor(d, door);
 		updateAPanel(d, door);
 	end
-	
-	clickCool = 10;
 end
 
 function lightFunc(d)
@@ -867,11 +864,12 @@ function lightFunc(d)
 	
 	if clickCool > 0 then return; end
 	
-	clickCool = 10;
 	if door.stuck then
+		doSound('error', 1, 'doorSound');
 		
 		return;
 	end
+	clickCool = 10;
 	
 	door.light = not door.light;
 	updateAPanel(d, door);
@@ -883,6 +881,12 @@ function lightFunc(d)
 			lastDoor.light = false;
 			updateAPanel(lastLightOn, lastDoor);
 		end
+		if getVar(d .. 'AtDoor') and not getVar(d .. 'Snd') then
+			setVar(d .. 'Snd', true);
+			
+			doSound('windowScare', 1, 'scareWin');
+		end
+		
 		lastLightOn = d;
 	end
 	lightOn = door.light;
@@ -1133,6 +1137,7 @@ end
 
 function triggerItsMe()
 	itsMe = true;
+	setVis('halluCam', (Random(10) == 1));
 	setAlpha('halluCam', 1);
 	setSoundVolume('robotVoice', 1);
 	
@@ -1211,8 +1216,13 @@ function mainFunc(f, n)
 	return _G[f](n);
 end
 
+function propDoor(d, p, v)
+	_G[d .. 'Door'][p] = v;
+end
+
 function cacheSounds()
 	precacheSound('partyFavor');
+	precacheSound('error');
 	precacheSound('doorSfx');
 	precacheSound('humMed2');
 	precacheSound('robotVoice');
@@ -1239,6 +1249,7 @@ function cacheSounds()
 	precacheSound('laughGiggle2d');
 	precacheSound('laughGiggle8d');
 	
+	precacheSound('windowScare');
 	precacheSound('pirateSong');
 	precacheSound('doorPound');
 	precacheSound('circus');

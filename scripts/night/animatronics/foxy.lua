@@ -68,10 +68,10 @@ function foxTryAttack()
 	local doorPhase = getMainVar('leftDoor').phase;
 	
 	if getMainVar('viewingCams') then
-		triggerPanel();
+		runMainFunc('trigPanel');
 	end
 	
-	lightOff();
+	runMainFunc('disableLight');
 	
 	if doorPhase == 0 then
 		if not getVar('jumpscared') then
@@ -93,6 +93,7 @@ function foxyKnock()
 	local toTake = 10 + (r.knocks * 50);
 	
 	doSound('knock', 1, 'foxKnock');
+	runMainFunc('takePower', toTake);
 	removePower(toTake);
 	
 	r.knocks = r.knocks + 1;
