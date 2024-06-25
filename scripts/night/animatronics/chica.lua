@@ -83,7 +83,7 @@ function tryEnter()
 		leaveLight();
 		
 		r.cam = 7;
-		setCamRobot(7, 2, 'CHICA' .. getRandomInt(1, 2));
+		setCamRobot(7, 3, 'CHICA' .. getRandomInt(1, 2));
 	end
 end
 
