@@ -1,10 +1,9 @@
 r = {
-	ai = 20,
+	ai = 0,
 	
 	cam = 1,
 	dir = 0,
-	pos = 0,
-	tryingOffice = false;
+	tryingOffice = false,
 	
 	moveTree = {
 		[1] = {9, 2}, -- stage
