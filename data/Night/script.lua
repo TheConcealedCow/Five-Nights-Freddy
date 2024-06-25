@@ -19,6 +19,8 @@ local lookYellow = 0;
 
 local randForPic = 0;
 
+local camTriggers = {};
+
 local itsMe = false;
 robotGlitch = false;
 
@@ -135,6 +137,10 @@ function create()
 		
 		createGlobalCallback('doorProp', function(d, p, v) {
 			parentLua.call('propDoor', [d, p, v]);
+		});
+		
+		createGlobalCallback('addBugTrigger', function(a, b) {
+			parentLua.call('setBugTrigger', [a, b]);
 		});
 		
 		function updateScroll(x) {
@@ -521,6 +527,14 @@ function onUpdatePost(e)
 	updateCam(ti);
 	checkPanel();
 	
+	for i = 1, 11 do
+		if camTriggers[i] then
+			camTriggers[i] = camTriggers[i] - ti;
+			
+			if camTriggers[i] <= 0 then camTriggers[i] = nil; end
+		end
+	end
+	
 	tickRate = tickRate + e;
 	while (tickRate >= 1 / 60) do
 		tickRate = tickRate - (1 / 60);
@@ -539,7 +553,7 @@ function tickUpdate()
 	end
 	
 	flickerCam = (getRandomInt(1, 10) <= 3);
-	if curCam == 4 and viewingCams then updateACam(); end
+	if curCam == 4 then updateACam(); end
 	
 	if itsMe then setVis('halluCam', (Random(10) == 1)); end
 	
@@ -1074,27 +1088,44 @@ local camExtraAdd = {
 		return s;
 	end
 };
-function updateACam()
-	if curCam == 10 then return; end
+function updateACam() -- if the frame returns nil, then skip the loops before the n'th suffix (starting at 1)
+	if curCam == 10 or not viewingCams then return; end
 	
 	local c = cameraProps[curCam];
+	local startPoint = 0;
 	local str = '';
-	for i = 1, 4 do
-		str = str .. c.slots[i];
+	local fr = nil;
+	
+	while fr == nil and startPoint < 4 do
+		str = '';
+		startPoint = startPoint + 1;
+		
+		for i = startPoint, 4 do
+			str = str .. c.slots[i];
+		end
+		
+		if camExtraAdd[curCam] then str = camExtraAdd[curCam](str); end
+		fr = camDescFr[curCam][str];
 	end
 	
-	if camExtraAdd[curCam] then str = camExtraAdd[curCam](str); end
-	
-	local fr = camDescFr[curCam][str];
-	
+	if fr == nil then return; end
 	setFrame(curCam .. 'Cam', fr);
 end
 
 function setRobotRoom(c, i, r)
 	if c > 0 and c < 12 then
 		cameraProps[c].slots[i] = r;
+	end
+end
+
+function setBugTrigger(a, b) -- if you enter either cam a or cam b during their 10 tick duration it'll block your cam for 300 ticks (5 seconds
+	camTriggers[a] = 10;
+	camTriggers[b] = 10;
+	
+	if viewingCams and (curCam == a or curCam == b) then
+		debugPrint('you looked at them rofl');
 		
-		--staticForCam(c, b);
+		updateACam();
 	end
 end
 

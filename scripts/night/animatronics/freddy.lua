@@ -74,7 +74,8 @@ end
 local extraChecksOnCur = {
 	[0] = function() return false; end,
 	[1] = function()
-		return true; -- check if bonnie and chica left
+		local ca = getMainVar('cameraProps')[1].slots;
+		return (ca[2] == '' and ca[3] == ''); -- check if bonnie and chica left
 	end,
 	[7] = function()
 		return not getMainVar('rightDoor').light;

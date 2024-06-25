@@ -1,5 +1,5 @@
 r = {
-	ai = 20,
+	ai = 0,
 	
 	cam = 1,
 	dir = 0,
@@ -31,11 +31,11 @@ local canRand = {
 	[11] = true
 }
 function updateRoom(n)
+	local prev = r.cam;
 	setCamRobot(r.cam, 3, '');
-	
 	r.cam = n;
-	
 	setCamRobot(n, 3, 'CHICA' .. (canRand[n] and getRandomInt(1, 2) or '')); -- dining room, bathroom, 4A
+	addBugTrigger(prev, n);
 end
 
 function onUpdatePost(e)

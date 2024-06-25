@@ -106,7 +106,6 @@ local timers = {
 			r.foxWaitRun = 0;
 			setVar('foxPhase', r.progress);
 			
-			debugPrint('moved a phase!');
 			setCamRobot(3, 4, 'FOXY' .. r.progress);
 		end
 	end

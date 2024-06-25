@@ -1,5 +1,5 @@
 r = {
-	ai = 0,
+	ai = 20,
 	
 	cam = 1,
 	dir = 0,
@@ -25,11 +25,11 @@ function onCreate()
 end
 
 function updateRoom(n)
+	local prev = r.cam;
 	setCamRobot(r.cam, 2, '');
-	
 	r.cam = n;
-	
 	setCamRobot(n, 2, 'BONNIE' .. (n == 2 and getRandomInt(1, 2) or ''));
+	addBugTrigger(prev, n);
 end
 
 function onUpdatePost(e)
@@ -50,6 +50,7 @@ function moveRobot()
 			runMainFunc('disableLight');
 			
 			setCamRobot(r.cam, 2, '');
+			addBugTrigger(r.cam, r.cam);
 			
 			r.cam = 50;
 		else
@@ -78,6 +79,7 @@ function tryEnter()
 		
 		r.cam = 2;
 		setCamRobot(2, 2, 'BONNIE' .. getRandomInt(1, 2));
+		addBugTrigger(2, 2);
 	end
 end
 
