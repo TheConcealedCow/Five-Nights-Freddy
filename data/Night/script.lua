@@ -1526,7 +1526,7 @@ local timers = {
 	end,
 	['forceScareFred'] = function()
 		
-	end
+	end,
 	
 	['yellowScare'] = function()
 		switchState('CreepyEnd');
