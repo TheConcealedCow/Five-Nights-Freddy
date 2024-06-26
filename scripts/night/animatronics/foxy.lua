@@ -1,5 +1,6 @@
 r = {
 	ai = 0,
+	
 	refCam = 0,
 	disTime = 0,
 	progress = 0,
@@ -10,9 +11,19 @@ r = {
 	knocks = 0,
 }
 function onCreate()
+	runHaxeCode([[
+		createGlobalCallback('addFoxy', function() {
+			parentLua.call('addAI', []);
+		});
+	]]);
+	
 	runTimer('foxyMove', pl(5.01), 0);
 	
 	setVar('foxPhase', r.progress);
+	
+	makeAnimatedLuaSprite('scareFOXY', 'gameAssets/jumpscares/foxy');
+	addAnimationByPrefix('scareFOXY', 'scare', 'Scare', 30, false);
+	addScareSlot('scareFOXY');
 end
 
 local dumTime = 0;
@@ -94,9 +105,12 @@ function foxyKnock()
 	
 	doSound('knock', 1, 'foxKnock');
 	runMainFunc('takePower', toTake);
-	removePower(toTake);
 	
 	r.knocks = r.knocks + 1;
+end
+
+function addAI()
+	r.ai = r.ai + 1;
 end
 
 local timers = {

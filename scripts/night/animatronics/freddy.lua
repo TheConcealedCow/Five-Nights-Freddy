@@ -1,9 +1,11 @@
 r = {
 	ai = 0,
+	
 	cam = 1,
 	movePhase = 0,
 	moveTime = 0,
 	timeKit = 0,
+	
 	moveTree = {
 		[1] = 2, -- 15, 30
 		[2] = 11, -- 20, 35
@@ -25,9 +27,11 @@ function onCreate()
 	setCamRobot(r.cam, 1, 'FREDDY');
 	
 	runTimer('freddyMove', pl(3.02), 0);
+	setVar('fredGotYou', false);
 	
-	--makeAnimatedLuaSprite('scareFREDDY', 'gameAssets/jumpscares/freddy1');
-	--addAnimationByPrefix('scareFREDDY', 'scare', 'Scare', 30, false);
+	makeAnimatedLuaSprite('scareFREDDY', 'gameAssets/jumpscares/freddy1');
+	addAnimationByPrefix('scareFREDDY', 'scare', 'Scare', 30, false);
+	addScareSlot('scareFREDDY');
 end
 
 function updateRoom(n)
@@ -90,6 +94,8 @@ local extraChecksOnCur = {
 				setCamRobot(r.cam, 1, '');
 				r.cam = 0;
 				
+				setVar('fredGotYou', true);
+				setSoundVolume('scaryAmb', 1);
 				runTimer('tryFredScare', pl(1), 0);
 				doSound('whispering', 1, 'fredWhisp');
 			elseif doorPhase == 2 and cam ~= 7 then

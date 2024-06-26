@@ -3,19 +3,35 @@ r = {
 	
 	cam = 1,
 	dir = 0,
+	
+	timeKitchen = 0,
 	tryingOffice = false,
 	
 	moveTree = {
-		[1] = {2, 2}, -- too lazy to check table lengths
-		[2] = {11, 10},
+		[1] = {2, 2}, -- 0.1, 0.1 too lazy to check table lengths
+		[2] = {11, 10}, -- 
 		[7] = {2, 8},
 		[8] = {7, 50},
 		[10] = {11, 7},
 		[11] = {10, 7},
 		[50] = {1, 1}
+	},
+	soundMove = {
+		[1] = {0.1, 0.1},
+		[2] = {0.1, 0.1},
+		[7] = {0.3, 0.3},
+		[8] = {0.4, 0.4},
+		[10] = {0.1, 0.2},
+		[11] = {0.2, 0.2}
 	}
 }
 function onCreate()
+	runHaxeCode([[
+		createGlobalCallback('addChica', function() {
+			parentLua.call('addAI', []);
+		});
+	]]);
+	
 	setCamRobot(r.cam, 3, 'CHICA');
 	
 	setVar('chicaMoved', false);
@@ -23,6 +39,10 @@ function onCreate()
 	setVar('rightSnd', false);
 	
 	runTimer('chicaMove', pl(4.97), 0);
+	
+	makeAnimatedLuaSprite('scareCHICA', 'gameAssets/jumpscares/chica');
+	addAnimationByPrefix('scareCHICA', 'scare', 'Scare', 30, false);
+	addScareSlot('scareCHICA');
 end
 
 local canRand = {
@@ -39,7 +59,18 @@ function updateRoom(n)
 end
 
 function onUpdatePost(e)
+	e = e * playbackRate;
+	
 	if r.tryingOffice then tryEnter(); end
+	
+	if r.cam == 10 then
+		r.timeKitchen = r.timeKitchen + e;
+		while r.timeKitchen >= 4 do
+			r.timeKitchen = r.timeKitchen - 4;
+			
+			runMainFunc('kitchenChanceSnd');
+		end
+	end
 end
 
 function moveRobot()
@@ -65,7 +96,9 @@ function moveRobot()
 		return;
 	end
 	
+	doSound('deepSteps', r.soundMove[r.dir], 'chicaStep');
 	updateRoom(want);
+	if r.cam ~= 10 then setSoundVolume('kitchenSnd', 0); end
 end
 
 function tryEnter()
@@ -84,6 +117,7 @@ function tryEnter()
 		
 		r.cam = 7;
 		setCamRobot(7, 3, 'CHICA' .. getRandomInt(1, 2));
+		doSound('deepSteps', 0.4, 'chicaStep');
 	end
 end
 
@@ -92,6 +126,10 @@ function leaveLight()
 	setVar('rightAtDoor', false);
 	playAnim('rightOfficeLight', 'r', true);
 	runMainFunc('disableLight');
+end
+
+function addAI()
+	r.ai = r.ai + 1;
 end
 
 local timers = {

@@ -1,8 +1,9 @@
 r = {
-	ai = 20,
+	ai = 0,
 	
 	cam = 1,
 	dir = 0,
+	
 	tryingOffice = false,
 	
 	moveTree = {
@@ -13,15 +14,33 @@ r = {
 		[6] = {50, 4}, -- closet
 		[9] = {2, 4}, -- backstage
 		[50] = {1, 1}
+	},
+	soundMove = {
+		[1] = {0.1, 0.1},
+		[2] = {0.2, 0.2},
+		[4] = {0.3, 0.3},
+		[5] = {0.4, 0.4},
+		[6] = {0.3, 0.3},
+		[9] = {0.1, 0.1}
 	}
 }
 function onCreate()
+	runHaxeCode([[
+		createGlobalCallback('addBonnie', function() {
+			parentLua.call('addAI', []);
+		});
+	]]);
+	
 	setCamRobot(r.cam, 2, 'BONNIE'); -- bonnie's first move is ignored if chica moves too because scott
 	
 	setVar('leftAtDoor', false);
 	setVar('leftSnd', false);
 	
 	runTimer('bonnieMove', pl(4.98), 0);
+	
+	makeAnimatedLuaSprite('scareBONNIE', 'gameAssets/jumpscares/bonnie');
+	addAnimationByPrefix('scareBONNIE', 'scare', 'Scare', 30, false);
+	addScareSlot('scareBONNIE');
 end
 
 function updateRoom(n)
@@ -60,6 +79,7 @@ function moveRobot()
 		return;
 	end
 	
+	doSound('deepSteps', r.soundMove[r.dir], 'bonnieStep');
 	updateRoom(want);
 end
 
@@ -80,6 +100,7 @@ function tryEnter()
 		r.cam = 2;
 		setCamRobot(2, 2, 'BONNIE' .. getRandomInt(1, 2));
 		addBugTrigger(2, 2);
+		doSound('deepSteps', 0.3, 'bonnieStep');
 	end
 end
 
@@ -88,6 +109,10 @@ function leaveLight()
 	setVar('leftAtDoor', false);
 	playAnim('leftOfficeLight', 'l', true);
 	runMainFunc('disableLight');
+end
+
+function addAI()
+	r.ai = r.ai + 1;
 end
 
 local firstMove = true;

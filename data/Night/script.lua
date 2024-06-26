@@ -1,8 +1,8 @@
-local night = 'gameAssets/night/';
+local night = 'gameAssets/night/'; -- 65535
 local hud = night .. 'hud/';
 local office = night .. 'office/';
 local panel = night .. 'panel/';
-local HITBOX = 'hitboxes/HITBOX'; -- 65535
+local HITBOX = 'hitboxes/HITBOX';
 
 curCam = 1;
 
@@ -13,9 +13,13 @@ local power = 999;
 
 local staticBase = 0;
 
+local callMuted = false;
+
 local seenYellow = false;
 local yellowPhase = 0;
 local lookYellow = 0;
+local staticStuck = 0;
+local camBugging = false;
 
 local randForPic = 0;
 
@@ -24,17 +28,20 @@ local camTriggers = {};
 local itsMe = false;
 robotGlitch = false;
 
+local outOfPower = false;
+
 --[[
-	TODO: 
-	 - when viewing an animatronic when they move, make ur camera stuck!!
+	TODO:
 	 - make the jumpscare actually work!!!
-	 - 6 am stuff
+			- for bonnie and chica, wait 10 frames before playing the sound, and after 40 frames go to gameover
+			- for freddy wait for 7 of his frames before playing the scare
+			- if power goes out, cancel the jumpscare (markiplier moment!)
+			
 	 - powerout stuff
-	 
-	 - when chica is in the kitchen make it play the sounds of her fuckin around
+	 - gameover stuff
 ]]
 function create()
-	luaDebugMode = true; -- "songVariations": ["fucked"],
+	luaDebugMode = true;
 	
 	runHaxeCode([[
 		import openfl.filters.ShaderFilter;
@@ -88,6 +95,13 @@ function create()
 		hitboxHudCam.bgColor = 0x00000000;
 		hitboxHudCam.alpha = 0;
 		setVar('hitboxHudCam', hitboxHudCam);
+		
+		var endCam = FlxG.cameras.add(new FlxCamera(0, 0, 1280, 720), false);
+		endCam.pixelPerfectRender = true;
+		endCam.antialiasing = false;
+		endCam.bgColor = 0xFF000000;
+		endCam.alpha = 0.00001;
+		setVar('endCam', endCam);
 		
 		var allObjs = [];
 		createCallback('addBoxCam', function(o, f, r) {
@@ -143,6 +157,23 @@ function create()
 			parentLua.call('setBugTrigger', [a, b]);
 		});
 		
+		createGlobalCallback('addScareSlot', function(t) {
+			parentLua.call('addScare', [t]);
+		});
+		
+		function killCams() {
+			FlxG.cameras.remove(mainCam);
+			FlxG.cameras.remove(cameraCam);
+			FlxG.cameras.remove(panelOvCam);
+			FlxG.cameras.remove(hudCam);
+			FlxG.cameras.remove(panelCam);
+			FlxG.cameras.remove(halluCam);
+		}
+		
+		function panelCol(t) {
+			panelOvCam.bgColor = (t ? 0xFF000000 : 0x00000000);
+		}
+		
 		function updateScroll(x) {
 			var realX = (x - 640);
 			
@@ -163,33 +194,71 @@ function create()
 			}
 		}
 		
+		function killSounds() {
+			// manually destroying all of the sounds cuz `FlxG.sound.destroy(true);` crashes the game
+			while (FlxG.sound.list.members.length > 0) {
+				final sound:FlxSound = FlxG.sound.list.members[FlxG.sound.list.members.length - 1];
+
+				if (sound == null) {
+					FlxG.sound.list.members.remove(sound);
+					continue;
+				}
+
+				sound.stop();
+				FlxG.sound.list.members.pop();
+			}
+		}
+		
+		function stopAllStuff() {
+			FlxTimer.globalManager.forEach(function(tmr:FlxTimer) tmr.active = false); // copy pasted this part from Rudy!!
+			
+			// manually destroying all of the sounds cuz `FlxG.sound.destroy(true);` crashes the game
+			while (FlxG.sound.list.members.length > 0) {
+				final sound:FlxSound = FlxG.sound.list.members[FlxG.sound.list.members.length - 1];
+
+				if (sound == null) {
+					FlxG.sound.list.members.remove(sound);
+					continue;
+				}
+				
+				sound.stop();
+				FlxG.sound.list.members.pop();
+			}
+			
+			for (obj in game.members) if (Std.isOfType(obj, FlxSprite) && obj.active) obj.active = false;
+		}
+		
 		updateScroll(640);
 	]]);
 	
-	addLuaScript('scripts/objects/COUNTERDOUBDIGIT'); -- TODO: MAKE THE BLIP SPRITE ITS OWN CAMERA TO HIDE IT WHEN NEEDED
+	addLuaScript('scripts/objects/COUNTERDOUBDIGIT');
 	
 	checkHalloween();
 	makeOffice();
 	
 	makePanel();
 	makeHUD();
+	make6Am();
 	
 	cacheSounds();
 	
+	setVar('jumpscared', false);
+	setVar('interCam3Sfx', false);
+	
+	addLuaScript('scripts/night/animatronics/foxy');
 	addLuaScript('scripts/night/animatronics/freddy');
 	addLuaScript('scripts/night/animatronics/chica');
 	addLuaScript('scripts/night/animatronics/bonnie');
-	addLuaScript('scripts/night/animatronics/foxy');
 	
 	randForPic = getRandomInt(1, 100);
-	
-	setVar('jumpscared', false);
-	setVar('interCam3Sfx', false);
 	
 	doSound('buzzFan', 0.25, 'fanSound', true);
 	doSound('coldPresc', 0.5, 'bgAmb', true);
 	doSound('humMed2', 0, 'lightHum', true);
 	doSound('robotVoice', 0, 'robotVoice', true);
+	doSound('eerieAmb', 0, 'scaryAmb', true);
+	
+	startCall();
 	
 	runTimer('updateSec', pl(1), 0);
 	runTimer('randCircus', pl(5), 0);
@@ -197,7 +266,7 @@ function create()
 	runTimer('hideStuff', 0.1);
 end
 
-local isHalloween = true;
+local isHalloween = false;
 function checkHalloween()
 	local d = os.date();
 	local s = stringSplit(d, '/');
@@ -227,6 +296,13 @@ function makeOffice()
 	setCam('rightOfficeLight');
 	addLuaSprite('rightOfficeLight');
 	setAlpha('rightOfficeLight', 0.00001);
+	
+	makeAnimatedLuaSprite('officeNoPower', office .. 'officeNoPower');
+	addAnimationByPrefix('officeNoPower', 'g', 'Office', 0, false);
+	playAnim('officeNoPower', 'g', true);
+	setCam('officeNoPower');
+	addLuaSprite('officeNoPower');
+	setAlpha('officeNoPower', 0.00001);
 	
 	makeAnimatedLuaSprite('fan', office .. 'o/fan', 868 - 88, 400 - 97);
 	addAnimationByPrefix('fan', 'fan', 'Fan', 59);
@@ -363,11 +439,6 @@ function makePanel()
 	setCam('frameCam', 'panelOvCam');
 	addLuaSprite('frameCam');
 	
-	--makeLuaSprite('volZone', HITBOX, (848 - 144) + 151, (313 - 66) + 293);
-	--scaleObject('volZone', 289, 132);
-	--setCam('volZone', 'panelOvCam');
-	--addLuaSprite('volZone');
-	--setAlpha('volZone', 0.3);
 	
 	makeAnimatedLuaSprite('rec', panel .. 'hud/rec', 92 - 24, 76 - 24);
 	addAnimationByPrefix('rec', 'rec', 'Rec', 1);
@@ -495,6 +566,13 @@ function makeHUD()
 	setCam('powerBar', 'hudCam');
 	addLuaSprite('powerBar');
 	
+	if curNight < 6 then
+		makeLuaSprite('muteCall', hud .. 'muteCall', 87 - 60, 37 - 15);
+		setCam('muteCall', 'hudCam');
+		addLuaSprite('muteCall');
+		setAlpha('muteCall', 0.00001);
+	end
+	
 	
 	makeAnimatedLuaSprite('itsMe', night .. 'fx/itsMe');
 	addAnimationByPrefix('itsMe', 'scare', 'Scare', 45);
@@ -503,18 +581,58 @@ function makeHUD()
 	addLuaSprite('itsMe');
 end
 
+local doing6Am = false;
+function make6Am()
+	makeLuaSprite('amSpr', 'gameAssets/NextDay/AMText', 645, 296);
+	setCam('amSpr', 'endCam');
+	addLuaSprite('amSpr');
+	
+	makeLuaSprite('5Spr', 'gameAssets/NextDay/5', 549, 298);
+	setCam('5Spr', 'endCam');
+	addLuaSprite('5Spr');
+	
+	makeLuaSprite('6Spr', 'gameAssets/NextDay/6', 549 + 4, 408);
+	setCam('6Spr', 'endCam');
+	addLuaSprite('6Spr');
+	
+	makeLuaSprite('topCover', nil, 572 - 74, 224 - 55);
+	makeGraphic('topCover', 1, 1, '000000');
+	scaleObject('topCover', 158, 118);
+	setCam('topCover', 'endCam');
+	addLuaSprite('topCover');
+	setVis('topCover', false);
+	
+	makeLuaSprite('botCover', nil, 573 - 74, 440 - 55);
+	makeGraphic('botCover', 1, 1, '000000');
+	scaleObject('botCover', 158, 118);
+	setCam('botCover', 'endCam');
+	addLuaSprite('botCover');
+	setVis('botCover', false);
+end
+
+function startCall()
+	if curNight > 5 then return; end
+	
+	doSound('call' .. curNight, 1, 'voiceOver');
+	
+	runTimer('showMute', pl(20));
+end
+
+function addScare(t)
+	--debugPrint(t);
+end
+
 local tickRate = 0;
 local xCam = 640;
 local viewingOffice = true;
 local isFlick = true;
 
-local powerDown = false;
 local hoverPanel = false;
 local canFlip = true;
 local inCams = false; -- triggered the panel flick
 viewingCams = false; -- actually LOOKING in the cams
 
-local curUsage = 0;
+local curUsage = 1;
 leftDrain = 0;
 rightDrain = 0;
 lightDrain = 0;
@@ -523,16 +641,47 @@ function onUpdatePost(e)
 	e = e * playbackRate;
 	local ti = (e * 60);
 	
+	if doing6Am then return; end
+	
 	clickCool = clickCool - ti;
 	updateCam(ti);
 	checkPanel();
 	
-	for i = 1, 11 do
-		if camTriggers[i] then
-			camTriggers[i] = camTriggers[i] - ti;
-			
-			if camTriggers[i] <= 0 then camTriggers[i] = nil; end
+	if not outOfPower then
+		for i = 1, 11 do
+			if camTriggers[i] then
+				camTriggers[i] = camTriggers[i] - ti;
+				
+				if camTriggers[i] <= 0 then camTriggers[i] = nil; end
+			end
 		end
+		
+		if camBugging then
+			staticStuck = staticStuck - ti;
+			
+			if staticStuck <= 0 then
+				runHaxeFunction('panelCol', {false});
+				setVis('cameraCam', true);
+				camBugging = false;
+				
+				onNewCam();
+			end
+		end
+		
+		if not callMuted and mouseClicked() and mouseOverlaps('muteCall') then
+			callMuted = true;
+			stopSound('voiceOver');
+			removeLuaSprite('muteCall');
+		end
+	else
+		if leftDoor.phase == 2 then
+			doorFunc('left', true);
+		end
+		if rightDoor.phase == 2 then
+			doorFunc('right', true);
+		end
+		
+		if viewingCams then trigPanel(); end
 	end
 	
 	tickRate = tickRate + e;
@@ -600,8 +749,15 @@ local camFollow = { -- if youre looking at cam 3, the cam doesnt move wahoo
 };
 local posCam = 640;
 function updateCam(t)
+	if not outOfPower then updateCamMove(t); end
+	
+	moveCam(t);
+end
+
+function updateCamMove(t)
 	local movePhase = (camFollow.phase % 2 == 0);
 	local timeIn = (movePhase and 320 or 100);
+	
 	camFollow.totTime = camFollow.totTime + t;
 	
 	if movePhase then
@@ -613,7 +769,9 @@ function updateCam(t)
 		camFollow.totTime = 0;
 		camFollow.phase = (camFollow.phase + 1) % 4;
 	end
-	
+end
+
+function moveCam(t)
 	if not viewingOffice then 
 		if viewingCams then
 			if mouseClicked() then camsClick(); end
@@ -649,6 +807,8 @@ local leaveCam = {
 	end,
 	[10] = function()
 		setAlpha('noVideo', 0);
+		
+		if cameraProps[10].slots[3] ~= '' then setSoundVolume('kitchenSnd', (viewingCams and 0.2 or 0.1)); end
 		setSoundVolume('fredKitchen', 0.05);
 	end
 }
@@ -701,13 +861,14 @@ local onCamFunc = {
 	end,
 	[10] = function()
 		setAlpha('noVideo', 1);
+		if cameraProps[10].slots[3] ~= '' then setSoundVolume('kitchenSnd', 0.75); end
 		setSoundVolume('fredKitchen', 0.5);
 	end
 }
 
 function onNewCam()
 	if onCamFunc[curCam] then onCamFunc[curCam](); end
-	
+	if camTriggers[curCam] then camStuck(); end
 	updateACam();
 end
 
@@ -727,7 +888,7 @@ end
 
 local camsDisabled = false;
 function checkPanel()
-	if powerDown or camsDisabled then return; end
+	if outOfPower or camsDisabled then return; end
 	
 	if hoverPanel then
 		if mouseOverlaps('panelShow') then
@@ -748,6 +909,34 @@ function trigPanel()
 	hoverPanel = true;
 	setAlpha('panelFlick', 0);
 	onPanelFunc();
+end
+
+function volEerieChecks() -- each individual one is worth 30, two of them equal 50, all of them together equal 75
+	if getSoundVolume('scaryAmb') == 1 then return; end
+	
+	local tot = {};
+	local vol = 0;
+	local bonnieZone = false;
+	local chicaZone = false;
+	local foxyPhase = getVar('foxPhase') >= 2;
+	
+	for i = 4, 8 do
+		if cameraProps[i].slots[2] ~= '' then bonnieZone = true; end
+		if cameraProps[i].slots[3] ~= '' then chicaZone = true; end
+	end
+	
+	if bonnieZone then table.insert(tot, 1); end
+	if chicaZone then table.insert(tot, 1); end
+	if foxyPhase then table.insert(tot, 1); end
+	
+	if #tot == 0 then
+		setSoundVolume('scaryAmb', 0);
+	else
+		vol = (#tot * 25);
+		if #tot == 1 then vol = 30; end
+		
+		setSoundVolume('scaryAmb', vol / 100);
+	end
 end
 
 local panelTrig = false;
@@ -792,8 +981,6 @@ function panelFin()
 		
 		setAlpha('mainCam', 0);
 		enterCams();
-	else
-		
 	end
 	
 	setAlpha('panel', 0);
@@ -858,12 +1045,12 @@ function noseFunc()
 	doSound('partyFavor', 1, 'noseSound');
 end
 
-function doorFunc(d)
+function doorFunc(d, f)
 	local door = _G[d .. 'Door'];
 	
-	if clickCool > 0 then return; end
+	if (not outOfPower and clickCool > 0) or (outOfPower and not f) then return; end
 	
-	if door.stuck then
+	if door.stuck and not f then
 		doSound('error', 1, 'doorSound');
 	elseif door.midPhase then return; else
 		clickCool = 10;
@@ -876,7 +1063,7 @@ end
 function lightFunc(d)
 	local door = _G[d .. 'Door'];
 	
-	if clickCool > 0 then return; end
+	if clickCool > 0 or outOfPower then return; end
 	
 	if door.stuck then
 		doSound('error', 1, 'doorSound');
@@ -1115,6 +1302,7 @@ end
 function setRobotRoom(c, i, r)
 	if c > 0 and c < 12 then
 		cameraProps[c].slots[i] = r;
+		volEerieChecks();
 	end
 end
 
@@ -1123,12 +1311,49 @@ function setBugTrigger(a, b) -- if you enter either cam a or cam b during their 
 	camTriggers[b] = 10;
 	
 	if viewingCams and (curCam == a or curCam == b) then
-		debugPrint('you looked at them rofl');
-		
 		updateACam();
+		camStuck();
 	end
 end
 
+local randGarble = {'compDigital', 'garble1', 'garble2', 'garble3'};
+function camStuck()
+	cameraBlip();
+	runHaxeFunction('panelCol', {true});
+	setVis('cameraCam', false);
+	staticStuck = 300;
+	camBugging = true;
+	
+	camTriggers[curCam] = nil;
+	
+	doSound(randGarble[getRandomInt(1, 4)], 1, 'camStuckSnd');
+end
+
+local kitSnd = {'ovenDra1', 'ovenDra2', 'ovenDra7', 'ovenDra7', 'ovenDraGen'};
+function kitchenChanceSnd()
+	local rand = getRandomInt(1, 10);
+	if kitSnd[rand] then
+		local vol = (viewingCams and (curCam == 10 and 0.75 or 0.2) or 0.1);
+		
+		doSound(kitSnd[rand], vol, 'kitchenSnd');
+	end
+end
+
+local onHour = {
+	[2] = function()
+		addBonnie();
+	end,
+	[3] = function()
+		addBonnie();
+		addChica();
+		addFoxy();
+	end,
+	[4] = function()
+		addBonnie();
+		addChica();
+		addFoxy();
+	end
+}
 function updateTime()
 	curMin = curMin + 1;
 	
@@ -1138,12 +1363,27 @@ function updateTime()
 		curHour = curHour + 1;
 		if curHour >= 13 then curHour = 1; end
 		
+		if onHour[curHour] then onHour[curHour](); end
+		
 		updateCounterSpr('hourNum', curHour);
 		
 		if curHour >= 6 then
-			debugPrint('you won');
+			start6AM();
 		end
 	end
+end
+
+function start6AM()
+	doing6Am = true;
+	
+	killScripts();
+	runHaxeFunction('stopAllStuff');
+	
+	doSound('chimes', 1);
+	doTweenAlpha('nextDayIN', 'endCam', 1, pl(1.01));
+	
+	setProperty('5Spr.active', true);
+	setProperty('6Spr.active', true);
 end
 
 function takePower(p)
@@ -1155,9 +1395,34 @@ end
 function updatePower()
 	updateCounterSpr('powerNum', bound(math.floor(power / 10), 0, 100));
 	
-	if power <= 0 then
-		
+	if power <= 0 and not outOfPower then
+		startPowerOut();
 	end
+end
+
+function startPowerOut()
+	if isRunning('scripts/night/animatronics/freddy') then
+		removeLuaScript('scripts/night/animatronics/freddy');
+	end
+	
+	runHaxeFunction('killSounds');
+	
+	disableLight();
+	outOfPower = true;
+	
+	doSound('powerDown', 1, 'noPower');
+	doSound('ambience2', 0.5, 'ambNoPower', true);
+	
+	setAlpha('hudCam', 0);
+	
+	setAlpha('leftButton', 0);
+	setAlpha('rightButton', 0);
+	
+	setAlpha('officeNoPower', 1);
+	setAlpha('fan', 0);
+	
+	runTimer('randStartFred', pl(5), 0);
+	runTimer('forceStartFred', pl(20));
 end
 
 function updateStaticAlpha()
@@ -1186,12 +1451,20 @@ local timers = {
 	['hideStuff'] = function()
 		setAlpha('yellowBear', 0);
 		
+		setAlpha('officeNoPower', 0);
+		
+		setAlpha('muteCall', 0);
 		setAlpha('cameraCam', 0);
 		setAlpha('panelOvCam', 0);
 		setAlpha('noVideo', 0);
+		setAlpha('endCam', 0);
 		
 		setVis('cam2AFox', false);
 		setAlpha('cam2AFox', 0);
+		
+		setVis('6Spr', false);
+		setVis('topCover', false);
+		setVis('botCover', false);
 		
 		setAlpha('halluCam', 0);
 		
@@ -1226,6 +1499,35 @@ local timers = {
 		setAlpha('halluCam', 0);
 		setSoundVolume('robotVoice', robotGlitch);
 	end,
+	['showMute'] = function()
+		runTimer('hideMute', pl(20));
+		setAlpha('muteCall', 1);
+	end,
+	['hideMute'] = function()
+		setAlpha('muteCall', 0);
+	end,
+	
+	['randStartFred'] = function()
+		
+	end,
+	['forceStartFred'] = function()
+		
+	end,
+	
+	['randEndFred'] = function()
+		
+	end,
+	['forceEndFred'] = function()
+		
+	end,
+	
+	['randScareFred'] = function()
+		
+	end,
+	['forceScareFred'] = function()
+		
+	end
+	
 	['yellowScare'] = function()
 		switchState('CreepyEnd');
 	end
@@ -1233,6 +1535,28 @@ local timers = {
 
 function onTimerCompleted(t)
 	if timers[t] then timers[t](); end
+end
+
+local tweens = {
+	['nextDayIN'] = function()
+		runHaxeFunction('killCams');
+		
+		doTweenY('5Out', '5Spr', 186, pl(4.75));
+		doTweenY('6In', '6Spr', 296, pl(4.75));
+		
+		setVis('6Spr', true);
+		setVis('topCover', true);
+		setVis('botCover', true);
+	end,
+	['5Out'] = function()
+		doSound('crowdChild', 1);
+		
+		runTimer('toNext', pl(200 / 60));
+	end
+}
+
+function onTweenCompleted(t)
+	if tweens[t] then tweens[t](); end
 end
 
 function varMain(v)
@@ -1258,10 +1582,16 @@ function cacheSounds()
 	precacheSound('humMed2');
 	precacheSound('robotVoice');
 	
+	precacheSound('compDigital');
+	precacheSound('garble1');
+	precacheSound('garble2');
+	precacheSound('garble3');
+	
 	precacheSound('xScream');
 	precacheSound('xScream2');
 	
 	precacheSound('run');
+	precacheSound('deepSteps');
 	precacheSound('runningFast');
 	precacheSound('musicBox');
 	
@@ -1280,10 +1610,31 @@ function cacheSounds()
 	precacheSound('laughGiggle2d');
 	precacheSound('laughGiggle8d');
 	
+	precacheSound('ovenDra1');
+	precacheSound('ovenDra2');
+	precacheSound('ovenDra7');
+	precacheSound('ovenDraGen');
+	
 	precacheSound('windowScare');
 	precacheSound('pirateSong');
 	precacheSound('doorPound');
 	precacheSound('circus');
 	
 	precacheSound('knock');
+	
+	precacheSound('chimes');
+	precacheSound('crowdChild');
+	
+	precacheSound('powerDown');
+	precacheSound('ambience2');
+end
+
+function killScripts()
+	if isRunning('scripts/night/animatronics/freddy') then
+		removeLuaScript('scripts/night/animatronics/freddy');
+	end
+	
+	removeLuaScript('scripts/night/animatronics/foxy');
+	removeLuaScript('scripts/night/animatronics/chica');
+	removeLuaScript('scripts/night/animatronics/bonnie');
 end
