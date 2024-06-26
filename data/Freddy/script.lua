@@ -14,7 +14,5 @@ function create()
 	]]);
 	
 	doSound('xScream', 1, 'scareSnd');
-	
-	runTimer('toGameOver', pl(10));
 end
 
