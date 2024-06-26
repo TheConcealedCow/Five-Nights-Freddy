@@ -29,16 +29,17 @@ local itsMe = false;
 robotGlitch = false;
 
 local outOfPower = false;
+local buzzPower = false;
+local doNothing = false;
 
 --[[
 	TODO:
+	 - camera names
+	 
 	 - make the jumpscare actually work!!!
 			- for bonnie and chica, wait 10 frames before playing the sound, and after 40 frames go to gameover
 			- for freddy wait for 7 of his frames before playing the scare
 			- if power goes out, cancel the jumpscare (markiplier moment!)
-			
-	 - powerout stuff
-	 - gameover stuff
 ]]
 function create()
 	luaDebugMode = true;
@@ -261,8 +262,10 @@ function create()
 	startCall();
 	
 	runTimer('updateSec', pl(1), 0);
+	if curNight > 1 then runTimer('extraDrain', bound(-curNight + 8, 3, 6), 0); end
 	runTimer('randCircus', pl(5), 0);
 	runTimer('randDoorSound', pl(10), 0);
+	runTimer('randStartFred', pl(5), 0); -- im fucking killing you scott
 	runTimer('hideStuff', 0.1);
 end
 
@@ -460,6 +463,12 @@ function makePanel()
 	setCam('map', 'panelOvCam');
 	addLuaSprite('map');
 	
+	makeAnimatedLuaSprite('roomNames', panel .. 'cams/roomNames', 832, 292);
+	addAnimationByPrefix('roomNames', 'cam', 'Cam', 0, false);
+	playAnim('roomNames', 'cam', true);
+	setCam('roomNames', 'panelOvCam');
+	addLuaSprite('roomNames');
+	
 	makeLuaSprite('blipLayer');
 	setCam('blipLayer', 'panelOvCam');
 	addLuaSprite('blipLayer');
@@ -641,7 +650,7 @@ function onUpdatePost(e)
 	e = e * playbackRate;
 	local ti = (e * 60);
 	
-	if doing6Am then return; end
+	if doing6Am or doNothing then return; end
 	
 	clickCool = clickCool - ti;
 	updateCam(ti);
@@ -681,7 +690,7 @@ function onUpdatePost(e)
 			doorFunc('right', true);
 		end
 		
-		if viewingCams then trigPanel(); end
+		if viewingCams then trigPanel(); setAlpha('fan', 0); end
 	end
 	
 	tickRate = tickRate + e;
@@ -694,15 +703,24 @@ end
 local flickerCam = false;
 function tickUpdate()
 	isFlick = (getRandomInt(1, 10) > 1); -- i love flickering
-	setVis('leftOfficeLight', isFlick);
-	setVis('rightOfficeLight', isFlick);
 	
-	if lightOn then
-		setSoundVolume('lightHum', isFlick);
+	if not outOfPower then -- elseif owie
+		setVis('leftOfficeLight', isFlick);
+		setVis('rightOfficeLight', isFlick);
+	
+		if lightOn then
+			setSoundVolume('lightHum', isFlick);
+		end
+	
+		flickerCam = (getRandomInt(1, 10) <= 3);
+		if curCam == 4 then updateACam(); end
+	elseif buzzPower then
+		local b = getRandomBool();
+		
+		setVis('mainCam', b);
+		setSoundVolume('buzzFlicker', (b and 0.5 or 0));
 	end
 	
-	flickerCam = (getRandomInt(1, 10) <= 3);
-	if curCam == 4 then updateACam(); end
 	
 	if itsMe then setVis('halluCam', (Random(10) == 1)); end
 	
@@ -869,6 +887,7 @@ local onCamFunc = {
 function onNewCam()
 	if onCamFunc[curCam] then onCamFunc[curCam](); end
 	if camTriggers[curCam] then camStuck(); end
+	setFrame('roomNames', curCam - 1);
 	updateACam();
 end
 
@@ -1421,11 +1440,31 @@ function startPowerOut()
 	setAlpha('officeNoPower', 1);
 	setAlpha('fan', 0);
 	
-	runTimer('randStartFred', pl(5), 0);
 	runTimer('forceStartFred', pl(20));
 end
 
+function startMusPower()
+	doSound('musicBox', 1, 'noPowerMus');
+	
+	runTimer('flickerFred', pl(0.05), 0);
+	runTimer('randEndFred', pl(5), 0);
+	runTimer('forceEndFred', pl(20));
+end
+
+function endMusPower()
+	runHaxeFunction('killSounds');
+	
+	doSound('buzzFan', 0.5, 'buzzFlicker');
+	
+	setFrame('officeNoPower', 0);
+	cancelTimer('flickerFred');
+	runTimer('powerGone', pl(2 / 6));
+	buzzPower = true;
+end
+
 function updateStaticAlpha()
+	if outOfPower then return; end
+	
 	local newAlph = 150 + Random(50) + (staticBase * 15);
 	
 	setAlpha('staticCam', clAlph(newAlph));
@@ -1482,6 +1521,9 @@ local timers = {
 		
 		staticBase = Random(3);
 	end,
+	['extraDrain'] = function()
+		takePower(1);
+	end,
 	['randCircus'] = function()
 		if (not luaSoundExists('cam3Sfx') or getVar('interCam3Sfx')) and getRandomInt(1, 30) == 1 then
 			local looking = (viewingCams and curCam == 3);
@@ -1508,24 +1550,56 @@ local timers = {
 	end,
 	
 	['randStartFred'] = function()
+		if not outOfPower then return; end
 		
+		if getRandomInt(1, 5) == 1 then
+			startMusPower();
+			
+			cancelTimer('randStartFred');
+			cancelTimer('forceStartFred');
+		end
 	end,
 	['forceStartFred'] = function()
+		startMusPower();
 		
+		cancelTimer('randStartFred');
+	end,
+	
+	['flickerFred'] = function()
+		local isFred = getRandomInt(1, 4) == 1;
+		
+		setFrame('officeNoPower', isFred);
 	end,
 	
 	['randEndFred'] = function()
-		
+		if getRandomInt(1, 5) == 1 then
+			endMusPower();
+			
+			cancelTimer('randEndFred');
+			cancelTimer('forceEndFred');
+		end
 	end,
 	['forceEndFred'] = function()
+		endMusPower();
+		cancelTimer('randEndFred');
+	end,
+	
+	['powerGone'] = function()
+		buzzPower = false;
+		doNothing = true;
 		
+		setVis('mainCam', false);
+		runHaxeFunction('killSounds');
+		
+		runTimer('randScareFred', pl(2), 0);
+		runTimer('forceScareFred', pl(20), 0);
 	end,
 	
 	['randScareFred'] = function()
-		
+		switchState('Freddy');
 	end,
 	['forceScareFred'] = function()
-		
+		switchState('Freddy');
 	end,
 	
 	['yellowScare'] = function()

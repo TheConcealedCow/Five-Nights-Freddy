@@ -32,6 +32,8 @@ function onCreate()
 	makeAnimatedLuaSprite('scareFREDDY', 'gameAssets/jumpscares/freddy1');
 	addAnimationByPrefix('scareFREDDY', 'scare', 'Scare', 30, false);
 	addScareSlot('scareFREDDY');
+	
+	makeAnimatedLuaSprite('scareFREDDYPOWER', 'gameAssets/jumpscares/freddy2');
 end
 
 function updateRoom(n)
