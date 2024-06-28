@@ -42,7 +42,7 @@ function onCreate()
 	runTimer('chicaMove', pl(4.97), 0);
 	
 	makeAnimatedLuaSprite('scareCHICA', 'gameAssets/jumpscares/chica');
-	addAnimationByPrefix('scareCHICA', 'scare', 'Scare', 59, false);
+	addAnimationByPrefix('scareCHICA', 'scare', 'Scare', 59);
 	setFrameRate('scareCHICA', 'scare', 59.4);
 	setCam('scareCHICA');
 	addLuaSprite('scareCHICA');

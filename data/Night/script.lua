@@ -6,7 +6,7 @@ local HITBOX = 'hitboxes/HITBOX';
 
 curCam = 1;
 
-local curNight = 1;
+local curNight = 6;
 local curHour = 12; -- next hour is 1, then so on
 local curMin = 0; -- when the next hour hits reset this to 1
 local power = 999;
@@ -754,7 +754,7 @@ viewingCams = false; -- actually LOOKING in the cams
 
 local curUsage = 1;
 leftDrain = 0;
-rightDrain = 0;
+rightDrain = 0
 lightDrain = 0;
 panelDrain = 0;
 function onUpdatePost(e)
@@ -1836,8 +1836,8 @@ local tweens = {
 	['nextDayIN'] = function()
 		runHaxeFunction('killCams');
 		
-		doTweenY('5Out', '5Spr', 186, pl(4.75));
-		doTweenY('6In', '6Spr', 296, pl(4.75));
+		doTweenY('5Out', '5Spr', 186, pl(5.09));
+		doTweenY('6In', '6Spr', 296, pl(5.09));
 		
 		setVis('6Spr', true);
 		setVis('topCover', true);
