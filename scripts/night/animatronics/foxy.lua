@@ -3,7 +3,7 @@ r = {
 	
 	refCam = 0,
 	disTime = 0,
-	progress = 2,
+	progress = 0,
 	
 	foxWaitRun = 0,
 	foxWaitAtt = 0,

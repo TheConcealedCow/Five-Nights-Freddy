@@ -1003,14 +1003,14 @@ local onCamFunc = {
 			setAlpha('cam2AFox', 1);
 		end
 	end,
-	[6] = function()
-		runHaxeFunction('camUpdatePos', {640});
-	end,
 	[5] = function()
 		if yellowPhase == 1 then
 			doSound('laughGiggle1', 1, 'laughYellow');
 			yellowPhase = 2;
 		end
+	end,
+	[6] = function()
+		runHaxeFunction('camUpdatePos', {640});
 	end,
 	[10] = function()
 		setAlpha('noVideo', 1);
@@ -1653,6 +1653,10 @@ function rollYelBear()
 	if not seenYellow and Random(32768) == 1 then -- due to Clickteam fusion limitations, the number overflows at 65535 and also has some devitation due to innacuracy
 		seenYellow = true;
 		yellowPhase = 1;
+		
+		if viewingCams and curCam == 5 then
+			onNewCam();
+		end
 	end
 end
 
