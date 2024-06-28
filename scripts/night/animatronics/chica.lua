@@ -25,6 +25,7 @@ r = {
 		[11] = {0.2, 0.2}
 	}
 }
+local night = 1;
 function onCreate()
 	runHaxeCode([[
 		createGlobalCallback('addChica', function() {
@@ -41,8 +42,15 @@ function onCreate()
 	runTimer('chicaMove', pl(4.97), 0);
 	
 	makeAnimatedLuaSprite('scareCHICA', 'gameAssets/jumpscares/chica');
-	addAnimationByPrefix('scareCHICA', 'scare', 'Scare', 30, false);
-	addScareSlot('scareCHICA');
+	addAnimationByPrefix('scareCHICA', 'scare', 'Scare', 59, false);
+	setFrameRate('scareCHICA', 'scare', 59.4);
+	setCam('scareCHICA');
+	addLuaSprite('scareCHICA');
+	setAlpha('scareCHICA', 0.00001);
+	addScareSlot('scareCHICA', 4, 1);
+	
+	night = getVar('night');
+	setAI();
 end
 
 local canRand = {
@@ -111,6 +119,15 @@ function tryEnter()
 		
 		leaveLight();
 		doorProp('right', 'stuck', true);
+		
+		if not getMainVar('wasGot') then
+			setMainVar('wasGot', true);
+			setMainVar('gotYou', true);
+			setMainVar('slotGot', 4);
+			
+			runTimer('forceScare', pl(30));
+			runTimer('randSoundChica', pl(5), 0);
+		end
 	elseif doorPhase == 2 then
 		r.tryingOffice = false;
 		leaveLight();
@@ -128,11 +145,23 @@ function leaveLight()
 	runMainFunc('disableLight');
 end
 
+local aiLevs = {0, 1, 5, 4, 7, 12};
+function setAI()
+	if night == 7 then
+		
+	else
+		r.ai = aiLevs[night];
+	end
+end
+
 function addAI()
 	r.ai = r.ai + 1;
 end
 
 local timers = {
+	['hideStuff'] = function()
+		setAlpha('scareCHICA', 0);
+	end,
 	['updateSec'] = function()
 		r.dir = getRandomInt(1, 2);
 	end,

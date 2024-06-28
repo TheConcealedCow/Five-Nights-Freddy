@@ -4,6 +4,8 @@ r = {
 	cam = 1,
 	dir = 0,
 	
+	bugTime = 0,
+	bugTimeV = 0,
 	tryingOffice = false,
 	
 	moveTree = {
@@ -24,6 +26,7 @@ r = {
 		[9] = {0.1, 0.1}
 	}
 }
+local night = 1;
 function onCreate()
 	runHaxeCode([[
 		createGlobalCallback('addBonnie', function() {
@@ -39,8 +42,14 @@ function onCreate()
 	runTimer('bonnieMove', pl(4.98), 0);
 	
 	makeAnimatedLuaSprite('scareBONNIE', 'gameAssets/jumpscares/bonnie');
-	addAnimationByPrefix('scareBONNIE', 'scare', 'Scare', 30, false);
-	addScareSlot('scareBONNIE');
+	addAnimationByPrefix('scareBONNIE', 'scare', 'Scare', 45);
+	setCam('scareBONNIE');
+	addLuaSprite('scareBONNIE');
+	setAlpha('scareBONNIE', 0.00001);
+	addScareSlot('scareBONNIE', 3, 1);
+	
+	night = getVar('night');
+	setAI();
 end
 
 function updateRoom(n)
@@ -93,6 +102,15 @@ function tryEnter()
 		
 		leaveLight();
 		doorProp('left', 'stuck', true);
+		
+		if not getMainVar('wasGot') then
+			setMainVar('wasGot', true);
+			setMainVar('gotYou', true);
+			setMainVar('slotGot', 3);
+			
+			runTimer('forceScare', pl(30));
+			runTimer('randSoundBonnie', pl(5), 0);
+		end
 	elseif doorPhase == 2 then
 		r.tryingOffice = false;
 		leaveLight();
@@ -111,12 +129,24 @@ function leaveLight()
 	runMainFunc('disableLight');
 end
 
+local aiLevs = {0, 3, 0, 2, 5, 10};
+function setAI()
+	if night == 7 then
+		
+	else
+		r.ai = aiLevs[night];
+	end
+end
+
 function addAI()
 	r.ai = r.ai + 1;
 end
 
 local firstMove = true;
 local timers = {
+	['hideStuff'] = function()
+		setAlpha('scareBONNIE', 0);
+	end,
 	['updateSec'] = function()
 		r.dir = getRandomInt(1, 2);
 	end,

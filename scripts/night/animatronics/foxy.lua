@@ -3,13 +3,14 @@ r = {
 	
 	refCam = 0,
 	disTime = 0,
-	progress = 0,
+	progress = 2,
 	
 	foxWaitRun = 0,
 	foxWaitAtt = 0,
 	
 	knocks = 0,
 }
+local night = 1;
 function onCreate()
 	runHaxeCode([[
 		createGlobalCallback('addFoxy', function() {
@@ -23,7 +24,13 @@ function onCreate()
 	
 	makeAnimatedLuaSprite('scareFOXY', 'gameAssets/jumpscares/foxy');
 	addAnimationByPrefix('scareFOXY', 'scare', 'Scare', 30, false);
-	addScareSlot('scareFOXY');
+	setCam('scareFOXY');
+	setObjectOrder('scareFOXY', getObjectOrder('scareLayer'));
+	setAlpha('scareFOXY', 0.00001);
+	addScareSlot('scareFOXY', 2, 3);
+	
+	night = getVar('night');
+	setAI();
 end
 
 local dumTime = 0;
@@ -87,16 +94,14 @@ function foxTryAttack()
 	if doorPhase == 0 then
 		if not getVar('jumpscared') then
 			r.progress = 6;
-			
-			setVar('jumpscared', true);
-		
-			debugPrint('boo');
+			runMainFunc('triggerScare', 2);
 		end
 	elseif doorPhase == 2 then
 		r.progress = Random(2);
 		setCamRobot(3, 4, (r.progress == 0 and '' or 'FOXY' .. r.progress));
 		
 		foxyKnock();
+		runMainFunc('volEerieChecks');
 	end
 end
 
@@ -109,11 +114,23 @@ function foxyKnock()
 	r.knocks = r.knocks + 1;
 end
 
+local aiLevs = {0, 1, 2, 6, 5, 6};
+function setAI()
+	if night == 7 then
+		
+	else
+		r.ai = aiLevs[night];
+	end
+end
+
 function addAI()
 	r.ai = r.ai + 1;
 end
 
 local timers = {
+	['hideStuff'] = function()
+		setAlpha('scareFOXY', 0);
+	end,
 	['foxyMove'] = function()
 		if r.progress < 3 and r.disTime <= 0 and getRandomInt(1, 20) <= r.ai then
 			r.progress = r.progress + 1;

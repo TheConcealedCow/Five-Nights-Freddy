@@ -13,20 +13,27 @@ local power = 999;
 
 local staticBase = 0;
 
-local callMuted = false;
+local callMuted = true;
 
 local seenYellow = false;
 local yellowPhase = 0;
 local lookYellow = 0;
 local staticStuck = 0;
 local camBugging = false;
+wasGot = false;
+slotGot = 0;
+gotYou = false;
+
+local bugVal = 0;
 
 local randForPic = 0;
 
 local camTriggers = {};
 
-local itsMe = false;
-robotGlitch = false;
+itsMe = false;
+
+local bugRobot = 0;
+local bugRobotView = 0;
 
 local outOfPower = false;
 local buzzPower = false;
@@ -34,12 +41,8 @@ local doNothing = false;
 
 --[[
 	TODO:
-	 - camera names
-	 
-	 - make the jumpscare actually work!!!
-			- for bonnie and chica, wait 10 frames before playing the sound, and after 40 frames go to gameover
-			- for freddy wait for 7 of his frames before playing the scare
-			- if power goes out, cancel the jumpscare (markiplier moment!)
+	 - make saves and going to menu work after rudy pushes the menu stuff!!
+	 - find more things todo n fix!!
 ]]
 function create()
 	luaDebugMode = true;
@@ -158,8 +161,16 @@ function create()
 			parentLua.call('setBugTrigger', [a, b]);
 		});
 		
-		createGlobalCallback('addScareSlot', function(t) {
-			parentLua.call('addScare', [t]);
+		createGlobalCallback('addScareSlot', function(t, s, y) {
+			parentLua.call('addScare', [t, s, y]);
+		});
+		
+		createCallback('objFrameChange', function(o, c) {
+			var obj = LuaUtils.getObjectDirectly(o);
+			
+			obj.animation.callback = function(n, f) {
+				parentLua.call(c, [f]);
+			}
 		});
 		
 		function killCams() {
@@ -245,6 +256,7 @@ function create()
 	
 	setVar('jumpscared', false);
 	setVar('interCam3Sfx', false);
+	setVar('night', curNight);
 	
 	addLuaScript('scripts/night/animatronics/foxy');
 	addLuaScript('scripts/night/animatronics/freddy');
@@ -263,6 +275,7 @@ function create()
 	
 	runTimer('updateSec', pl(1), 0);
 	if curNight > 1 then runTimer('extraDrain', bound(-curNight + 8, 3, 6), 0); end
+	if curNight >= 4 then runTimer('robotBug', pl(0.05), 0); end
 	runTimer('randCircus', pl(5), 0);
 	runTimer('randDoorSound', pl(10), 0);
 	runTimer('randStartFred', pl(5), 0); -- im fucking killing you scott
@@ -299,6 +312,11 @@ function makeOffice()
 	setCam('rightOfficeLight');
 	addLuaSprite('rightOfficeLight');
 	setAlpha('rightOfficeLight', 0.00001);
+	
+	makeLuaSprite('scareLayer');
+	setCam('scareLayer');
+	addLuaSprite('scareLayer');
+	setAlpha('scareLayer', 0);
 	
 	makeAnimatedLuaSprite('officeNoPower', office .. 'officeNoPower');
 	addAnimationByPrefix('officeNoPower', 'g', 'Office', 0, false);
@@ -623,12 +641,104 @@ function startCall()
 	if curNight > 5 then return; end
 	
 	doSound('call' .. curNight, 1, 'voiceOver');
+	callMuted = false;
 	
 	runTimer('showMute', pl(20));
 end
+ 
+local scareSlots = {};
+local curScare = '';
+function addScare(t, s, y)
+	scareSlots[s] = {
+		tag = t,
+		ty = y
+	}
+end
 
-function addScare(t)
-	--debugPrint(t);
+--[[ scare types
+	type 1: panel	
+		- when in panels theres a 1 in 5 chance for the scare to happen next time you pull it down
+		- after 20 seconds, it is automatically pulled down
+	type 2: office
+		- when in office theres a 1 in 5 chance for the scare to occur
+	type 3: foxy
+		- works like office but doesnt hide a lot of the office elements
+]]
+local scares = {
+	[1] = function(s)
+		setAlpha(s.tag, 1);
+		playAnim(s.tag, 'scare', true);
+		
+		hideOffice();
+		
+		runTimer('scareSndTime', pl(9 / 60));
+		runTimer('toDeathTimer', pl(39 / 60));
+	end,
+	[2] = function(s)
+		setAlpha(s.tag, 1);
+		playAnim(s.tag, 'scare', true);
+		objFrameChange(s.tag, 'scareFrame');
+		finAnim(s.tag, 'toDied', '');
+		
+		hideOffice();
+	end,
+	[3] = function(s)
+		setAlpha('office', 0);
+		setAlpha('leftDoor', 0);
+		setAlpha('rightDoor', 0);
+		
+		doSound('xScream', 1, 'scareSnd');
+		
+		setAlpha(s.tag, 1);
+		playAnim(s.tag, 'scare', true);
+		finAnim(s.tag, 'toDied', '');
+	end
+}
+function triggerScare(s)
+	if getVar('jumpscared') or outOfPower then return; end
+	setVar('jumpscared', true);
+	
+	goYelBear();
+	disableLight();
+	
+	local slot = scareSlots[s];
+	scares[slot.ty](slot);
+	curScare = slot.tag;
+end
+
+function killScare() -- kills the scare, for the powerout :)
+	if curScare ~= '' then
+		setAlpha(curScare, 0);
+	end
+end
+
+local didScareSnd = false;
+function scareFrame(f)
+	if f >= 7 and not didScareSnd and not outOfPower then
+		didScareSnd = true;
+		
+		doSound('xScream', 1, 'scareSnd');
+	end
+end
+
+function toDied()
+	if not outOfPower then
+		switchState('died');
+	end
+end
+
+function hideOffice()
+	setAlpha('leftDoor', 0);
+	setAlpha('rightDoor', 0);
+	setAlpha('leftButton', 0);
+	setAlpha('rightButton', 0);
+	setAlpha('office', 0);
+	
+	setAlpha('fan', 0);
+	if isHalloween then
+		setAlpha('pump', 0);
+		setAlpha('lightHallow', 0);
+	end
 end
 
 local tickRate = 0;
@@ -636,6 +746,7 @@ local xCam = 640;
 local viewingOffice = true;
 local isFlick = true;
 
+local viewingBug = false;
 local hoverPanel = false;
 local canFlip = true;
 local inCams = false; -- triggered the panel flick
@@ -681,6 +792,30 @@ function onUpdatePost(e)
 			callMuted = true;
 			stopSound('voiceOver');
 			removeLuaSprite('muteCall');
+		end
+		
+		if viewingBug then
+			bugRobotView = bugRobotView + e;
+			
+			while bugRobotView >= 0.1 do
+				bugRobotView = bugRobotView - 0.1;
+				
+				if not itsMe then
+					local vol = 1 + (Random(5) * 20);
+					setSoundVolume('robotVoice', vol / 100);
+				end
+			end
+		else
+			bugRobot = bugRobot + e;
+			
+			while bugRobot >= 0.1 do
+				bugRobot = bugRobot - 0.1;
+				
+				if not itsMe then
+					local vol = 1 + (Random(5) * 5);
+					setSoundVolume('robotVoice', vol / 100);
+				end
+			end
 		end
 	else
 		if leftDoor.phase == 2 then
@@ -888,6 +1023,11 @@ function onNewCam()
 	if onCamFunc[curCam] then onCamFunc[curCam](); end
 	if camTriggers[curCam] then camStuck(); end
 	setFrame('roomNames', curCam - 1);
+	
+	if curNight >= 4 then
+		local view = cameraProps[curCam].slots;
+		viewingBug = ((curCam == 5 or curCam == 8) and (view[2] == 'BONNIE' or view[3] == 'CHICA'));
+	end
 	updateACam();
 end
 
@@ -907,7 +1047,7 @@ end
 
 local camsDisabled = false;
 function checkPanel()
-	if outOfPower or camsDisabled then return; end
+	if outOfPower or camsDisabled or getVar('jumpscared') then return; end
 	
 	if hoverPanel then
 		if mouseOverlaps('panelShow') then
@@ -928,6 +1068,16 @@ function trigPanel()
 	hoverPanel = true;
 	setAlpha('panelFlick', 0);
 	onPanelFunc();
+end
+
+local randSndGot = {'vocalsBreaths06', 'vocalsBreaths08', 'vocalsBreaths12', 'vocalsBreaths14'};
+function randGotSound()
+	local snd = getRandomInt(1, 4);
+	
+	if randSndGot[snd] then
+		doSound(randSndGot[snd], 1, 'vocalsRand');
+		table.remove(randSndGot, snd);
+	end
 end
 
 function volEerieChecks() -- each individual one is worth 30, two of them equal 50, all of them together equal 75
@@ -1005,21 +1155,15 @@ function panelFin()
 	setAlpha('panel', 0);
 end
 
-function enterCams() -- 32768
+function enterCams()
 	disableLight();
 	panelDrain = 1;
 	updateUsage();
 	
-	if yellowPhase == 3 then
-		yellowPhase = 0;
-		
-		setAlpha('yellowBear', 0);
-		cancelTimer('yellowScare');
-	end
-	
 	setAlpha(curCam .. 'Cam', 1);
 	playAnim(curCam .. 'Marker', 'glow', true);
 	
+	goYelBear();
 	cameraBlip();
 	onNewCam();
 	
@@ -1045,6 +1189,10 @@ function exitCams()
 	setSoundVolume('tapeSound', 0);
 	setSoundVolume('fanSound', 0.25);
 	
+	if gotYou then
+		triggerScare(slotGot);
+	end
+	
 	randForPic = getRandomInt(1, 100);
 end
 
@@ -1067,7 +1215,7 @@ end
 function doorFunc(d, f)
 	local door = _G[d .. 'Door'];
 	
-	if (not outOfPower and clickCool > 0) or (outOfPower and not f) then return; end
+	if (not outOfPower and clickCool > 0) or (outOfPower and not f) or getVar('jumpscared') then return; end
 	
 	if door.stuck and not f then
 		doSound('error', 1, 'doorSound');
@@ -1082,7 +1230,7 @@ end
 function lightFunc(d)
 	local door = _G[d .. 'Door'];
 	
-	if clickCool > 0 or outOfPower then return; end
+	if clickCool > 0 or outOfPower or getVar('jumpscared') then return; end
 	
 	if door.stuck then
 		doSound('error', 1, 'doorSound');
@@ -1250,8 +1398,14 @@ local camExtraAdd = {
 		return s;
 	end,
 	[5] = function(s)
-		if s == 'BONNIE' then -- make him do the bugging
-			return s;
+		if s == 'BONNIE' and curNight >= 4 then -- make him do the bugging
+			if bugVal < 25 then
+				return 'BONNIEBUG1';
+			elseif bugVal >= 25 and bugVal < 29 then
+				return 'BONNIEBUG2';
+			else
+				return 'BONNIEBUG3';
+			end
 		end
 		
 		if yellowPhase >= 1 then -- yellow bear overrides the rare chance for the pic
@@ -1274,8 +1428,14 @@ local camExtraAdd = {
 	[8] = function(s)
 		if s == 'FREDDY' then return s; end
 		
-		if s == 'CHICA' then -- make her do the bugging
-			return s;
+		if s == 'CHICA' and curNight >= 4 then -- make her do the bugging
+			if bugVal < 25 then
+				return 'CHICABUG1';
+			elseif bugVal >= 25 and bugVal < 29 then
+				return 'CHICABUG2';
+			else
+				return 'CHICABUG3';
+			end
 		end
 		
 		if randForPic >= 97 then
@@ -1426,6 +1586,8 @@ function startPowerOut()
 	
 	runHaxeFunction('killSounds');
 	
+	killScare();
+	goYelBear();
 	disableLight();
 	outOfPower = true;
 	
@@ -1437,8 +1599,16 @@ function startPowerOut()
 	setAlpha('leftButton', 0);
 	setAlpha('rightButton', 0);
 	
-	setAlpha('officeNoPower', 1);
+	setAlpha('office', 0);
 	setAlpha('fan', 0);
+	
+	if isHalloween then
+		setAlpha('pump', 0);
+		setAlpha('lightHallow', 0);
+	end
+	
+	setAlpha('officeNoPower', 1);
+	
 	
 	runTimer('forceStartFred', pl(20));
 end
@@ -1486,6 +1656,15 @@ function rollYelBear()
 	end
 end
 
+function goYelBear()
+	if yellowPhase == 3 then
+		yellowPhase = 0;
+		
+		setAlpha('yellowBear', 0);
+		cancelTimer('yellowScare');
+	end
+end
+
 local timers = {
 	['hideStuff'] = function()
 		setAlpha('yellowBear', 0);
@@ -1512,6 +1691,7 @@ local timers = {
 			setAlpha(t, 0);
 		end
 	end,
+	
 	['updateSec'] = function()
 		updateTime();
 		takePower(curUsage);
@@ -1521,9 +1701,11 @@ local timers = {
 		
 		staticBase = Random(3);
 	end,
+	
 	['extraDrain'] = function()
 		takePower(1);
 	end,
+	
 	['randCircus'] = function()
 		if (not luaSoundExists('cam3Sfx') or getVar('interCam3Sfx')) and getRandomInt(1, 30) == 1 then
 			local looking = (viewingCams and curCam == 3);
@@ -1537,9 +1719,27 @@ local timers = {
 			doSound('doorPound', vol, 'ambDoor');
 		end
 	end,
+	
+	['scareSndTime'] = function()
+		if not outOfPower then
+			doSound('xScream', 1, 'scareSnd');
+		end
+	end,
+	['toDeathTimer'] = function()
+		toDied();
+	end,
+	
+	['robotBug'] = function()
+		bugVal = getRandomInt(1, 30);
+		
+		if viewingCams and (curCam == 5 or curCam == 8) then
+			updateACam();
+		end
+	end,
+	
 	['stopHallu'] = function()
 		setAlpha('halluCam', 0);
-		setSoundVolume('robotVoice', robotGlitch);
+		if getSoundVolume('robotVoice') == 1 then setSoundVolume('robotVoice', 0); end
 	end,
 	['showMute'] = function()
 		runTimer('hideMute', pl(20));
@@ -1547,6 +1747,23 @@ local timers = {
 	end,
 	['hideMute'] = function()
 		setAlpha('muteCall', 0);
+	end,
+	
+	['forceScare'] = function()
+		if viewingCams then
+			trigPanel();
+		end
+	end,
+	
+	['randSoundBonnie'] = function()
+		if viewingCams and getRandomInt(1, 3) == 1 then
+			randGotSound();
+		end
+	end,
+	['randSoundChica'] = function()
+		if viewingCams and getRandomInt(1, 3) == 1 then
+			randGotSound();
+		end
 	end,
 	
 	['randStartFred'] = function()
@@ -1698,6 +1915,8 @@ function cacheSounds()
 	
 	precacheSound('chimes');
 	precacheSound('crowdChild');
+	
+	precacheSound('static');
 	
 	precacheSound('powerDown');
 	precacheSound('ambience2');

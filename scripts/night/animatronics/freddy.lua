@@ -6,6 +6,8 @@ r = {
 	moveTime = 0,
 	timeKit = 0,
 	
+	timeAttack = 0,
+	
 	moveTree = {
 		[1] = 2, -- 15, 30
 		[2] = 11, -- 20, 35
@@ -23,6 +25,7 @@ r = {
 		[8] = {1, 1} -- this one will be custom
 	}
 }
+local night = 1;
 function onCreate()
 	setCamRobot(r.cam, 1, 'FREDDY');
 	
@@ -31,9 +34,18 @@ function onCreate()
 	
 	makeAnimatedLuaSprite('scareFREDDY', 'gameAssets/jumpscares/freddy1');
 	addAnimationByPrefix('scareFREDDY', 'scare', 'Scare', 30, false);
-	addScareSlot('scareFREDDY');
+	setCam('scareFREDDY');
+	addLuaSprite('scareFREDDY');
+	setAlpha('scareFREDDY', 0.00001);
+	addScareSlot('scareFREDDY', 1, 2);
 	
 	makeAnimatedLuaSprite('scareFREDDYPOWER', 'gameAssets/jumpscares/freddy2');
+	setCam('scareFREDDYPOWER');
+	addLuaSprite('scareFREDDYPOWER');
+	setAlpha('scareFREDDYPOWER', 0.00001);
+	
+	night = getVar('night');
+	setAI();
 end
 
 function updateRoom(n)
@@ -74,11 +86,21 @@ function onUpdatePost(e)
 			local looking = (getMainVar('viewingCams') and getMainVar('curCam') == 10);
 			doSound('musicBox', (looking and 0.5 or 0.05), 'fredKitchen');
 		end
+	elseif r.cam == 100 and not getMainVar('viewingCams') and not getVar('jumpscared') then
+		r.timeAttack = r.timeAttack + e;
+		
+		while r.timeAttack >= 1 do
+			r.timeAttack = r.timeAttack - 1;
+			
+			if Random(4) == 1 then
+				runMainFunc('triggerScare', 1);
+			end
+		end
 	end
 end
 
 local extraChecksOnCur = {
-	[0] = function() return false; end,
+	[100] = function() return false; end,
 	[1] = function()
 		local ca = getMainVar('cameraProps')[1].slots;
 		return (ca[2] == '' and ca[3] == ''); -- check if bonnie and chica left
@@ -94,11 +116,10 @@ local extraChecksOnCur = {
 				r.movePhase = 0;
 				robotSound(0.8, 1);
 				setCamRobot(r.cam, 1, '');
-				r.cam = 0;
+				r.cam = 100;
 				
 				setVar('fredGotYou', true);
 				setSoundVolume('scaryAmb', 1);
-				runTimer('tryFredScare', pl(1), 0);
 				doSound('whispering', 1, 'fredWhisp');
 			elseif doorPhase == 2 and cam ~= 7 then
 				r.movePhase = 0;
@@ -134,18 +155,23 @@ function robotSound(h, w)
 	doSound('runningFast', w, 'runSound');
 end
 
+local aiLevs = {0, 0, 1, 1, 3, 4};
+function setAI()
+	if night == 7 then
+		
+	else
+		r.ai = (night == 4 and getRandomInt(1, 2) or aiLevs[night]);
+	end
+end
+
 local timers = {
+	['hideStuff'] = function()
+		setAlpha('scareFREDDY', 0);
+		setAlpha('scareFREDDYPOWER', 0);
+	end,
 	['freddyMove'] = function()
 		if not getMainVar('viewingCams') and getRandomInt(1, 20) <= r.ai then
 			r.movePhase = 1;
-		end
-	end,
-	['tryFredScare'] = function()
-		if not getMainVar('viewingCams') and not getVar('jumpscared') and Random(4) == 1 then
-			cancelTimer('tryFredScare');
-			setVar('jumpscared', true);
-			
-			--doSound('xScream', 1, 'scareSound');
 		end
 	end
 }
