@@ -754,7 +754,7 @@ viewingCams = false; -- actually LOOKING in the cams
 
 local curUsage = 1;
 leftDrain = 0;
-rightDrain = 0
+rightDrain = 0;
 lightDrain = 0;
 panelDrain = 0;
 function onUpdatePost(e)
