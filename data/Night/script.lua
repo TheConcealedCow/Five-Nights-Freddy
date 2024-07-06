@@ -6,7 +6,7 @@ local HITBOX = 'hitboxes/HITBOX';
 
 curCam = 1;
 
-local curNight = 6;
+local curNight = 7;
 local curHour = 12; -- next hour is 1, then so on
 local curMin = 0; -- when the next hour hits reset this to 1
 local power = 999;
@@ -746,6 +746,7 @@ local xCam = 640;
 local viewingOffice = true;
 local isFlick = true;
 
+local isABug = false;
 local viewingBug = false;
 local hoverPanel = false;
 local canFlip = true;
@@ -805,7 +806,7 @@ function onUpdatePost(e)
 					setSoundVolume('robotVoice', vol / 100);
 				end
 			end
-		else
+		elseif isABug then
 			bugRobot = bugRobot + e;
 			
 			while bugRobot >= 0.1 do
@@ -1026,6 +1027,7 @@ function onNewCam()
 	
 	if curNight >= 4 then
 		local view = cameraProps[curCam].slots;
+		isABug = (cameraProps[5].slots[2] == 'BONNIE' or cameraProps[8].slots[3] == 'CHICA');
 		viewingBug = ((curCam == 5 or curCam == 8) and (view[2] == 'BONNIE' or view[3] == 'CHICA'));
 	end
 	updateACam();
@@ -1191,6 +1193,9 @@ function exitCams()
 	
 	if gotYou then
 		triggerScare(slotGot);
+		
+		xCam = 800;
+		runHaxeFunction('updateScroll', {xCam});
 	end
 	
 	randForPic = getRandomInt(1, 100);
